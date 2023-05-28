@@ -243,8 +243,10 @@ func (g *Group) Stop() (err error) {
 // stop stops all running services in the group of services.
 // If a service fails to stop in the group, its error
 // is returned but the other services are still stopped.
-// Only the first error encountered is returned.
-// Hooks can be used to catch each stop error for each service.
+// All service stop errors are wrapped together in the format
+// stopping <name_1>: %w; stopping <name_2>: %w; ...
+// and can be checked individually with errors.Is(err, ErrDefined).
+// Hooks can be used to access each stopping and stop result.
 func (g *Group) stop() (err error) {
 	stopErrors := make(chan serviceError)
 	var runningCount uint
