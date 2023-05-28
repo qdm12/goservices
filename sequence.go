@@ -228,13 +228,7 @@ func (s *Sequence) stop() (err error) {
 		s.hooks.OnStop(serviceString)
 		stopErr := service.Stop()
 		s.hooks.OnStopped(serviceString, stopErr)
-		switch {
-		case stopErr == nil:
-		case err == nil:
-			err = fmt.Errorf("stopping %s: %w", serviceString, stopErr)
-		default:
-			err = fmt.Errorf("%w; stopping %s: %w", err, serviceString, stopErr)
-		}
+		err = addStopError(err, serviceString, stopErr)
 		delete(s.runningServices, serviceString)
 	}
 

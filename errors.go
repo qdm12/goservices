@@ -43,3 +43,16 @@ func (s serviceError) Error() string {
 func (s serviceError) Unwrap() error {
 	return s.err
 }
+
+func addStopError(collected error, serviceName string,
+	newErr error) (newCollected error) {
+	if newErr == nil {
+		return collected
+	}
+
+	newErr = fmt.Errorf("stopping %s: %w", serviceName, newErr)
+	if collected == nil {
+		return newErr
+	}
+	return fmt.Errorf("%w; %w", collected, newErr)
+}
