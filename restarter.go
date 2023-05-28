@@ -1,6 +1,7 @@
 package goservices
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -52,7 +53,10 @@ func (r *Restarter) String() string {
 //
 // If the restarter is already running, the `ErrAlreadyStarted` error
 // is returned.
-func (r *Restarter) Start() (runError <-chan error, startErr error) {
+//
+// If the context is canceled, the service starting operations is canceled,
+// and the context error is wrapped in the `startErr` returned.
+func (r *Restarter) Start(ctx context.Context) (runError <-chan error, startErr error) {
 	// Prevent concurrent Stop and Start calls.
 	r.startStopMutex.Lock()
 	defer r.startStopMutex.Unlock()
@@ -72,10 +76,11 @@ func (r *Restarter) Start() (runError <-chan error, startErr error) {
 	serviceString := r.service.String()
 
 	r.hooks.OnStart(serviceString)
-	serviceRunError, startErr := r.service.Start()
+	serviceRunError, startErr := r.service.Start(ctx)
 	r.hooks.OnStarted(serviceString, startErr)
 
 	if startErr != nil {
+		startErr = addCtxErrorIfNeeded(startErr, ctx.Err())
 		return nil, startErr
 	}
 
@@ -124,8 +129,14 @@ func (r *Restarter) interceptRunError(ready chan<- struct{},
 			r.hooks.OnCrash(serviceName, err)
 
 			r.hooks.OnStart(serviceName)
+			// The only case where we would want to cancel this context
+			// is when the restarter encounters a service crash and is
+			// asked to Stop at the same time. This is most likely very
+			// rare, so we leave the start context uncanceled for the sake
+			// of simplicity.
+			startCtx := context.Background()
 			var startErr error
-			input, startErr = r.service.Start()
+			input, startErr = r.service.Start(startCtx)
 			r.hooks.OnStarted(serviceName, startErr)
 
 			if startErr != nil {

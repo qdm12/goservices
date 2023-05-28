@@ -1,5 +1,7 @@
 package goservices
 
+import "context"
+
 type Service interface {
 	Starter
 	Stopper
@@ -19,7 +21,9 @@ type Starter interface {
 	// the error channel.
 	// When the service is stopped, the service should NOT send an error
 	// in the run error channel or close this one.
-	Start() (runError <-chan error, startErr error)
+	// Start takes in a context and the implementation should prompty return
+	// the context error wrapped in `startErr` if the context is canceled.
+	Start(ctx context.Context) (runError <-chan error, startErr error)
 }
 
 type Stopper interface {

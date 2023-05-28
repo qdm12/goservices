@@ -1,6 +1,7 @@
 package goservices
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -69,7 +70,11 @@ func (s *Sequence) String() string {
 //
 // If the sequence is already running then a start error ErrAlreadyStarted
 // is returned.
-func (s *Sequence) Start() (runError <-chan error, startErr error) {
+//
+// If the context is canceled, the current service starting is canceled,
+// all already running services are stopped and the context error is wrapped
+// in the `startErr` returned.
+func (s *Sequence) Start(ctx context.Context) (runError <-chan error, startErr error) {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 
@@ -92,10 +97,11 @@ func (s *Sequence) Start() (runError <-chan error, startErr error) {
 		serviceString := service.String()
 
 		s.hooks.OnStart(serviceString)
-		serviceRunError, err := service.Start()
+		serviceRunError, err := service.Start(ctx)
 		s.hooks.OnStarted(serviceString, err)
 
 		if err != nil {
+			err = addCtxErrorIfNeeded(err, ctx.Err())
 			_ = s.stop()
 			return nil, fmt.Errorf("starting %s: %w", serviceString, err)
 		}

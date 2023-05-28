@@ -1,6 +1,7 @@
 package goservices
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -61,7 +62,11 @@ func (g *Group) String() string {
 //
 // If the group is already running, the `ErrAlreadyStarted` error
 // is returned.
-func (g *Group) Start() (runError <-chan error, startErr error) {
+//
+// If the context is canceled, all the starting operations are canceled,
+// all already running services are stopped and the context error is wrapped
+// in the `startErr` returned.
+func (g *Group) Start(ctx context.Context) (runError <-chan error, startErr error) {
 	g.startStopMutex.Lock()
 	defer g.startStopMutex.Unlock()
 
@@ -85,8 +90,8 @@ func (g *Group) Start() (runError <-chan error, startErr error) {
 	runErrorMapMutex := new(sync.Mutex)
 	for _, service := range g.services {
 		serviceString := service.String()
-		go startGroupedServiceAsync(service, serviceString, g.hooks,
-			startErrorCh, runErrorChannels, runErrorMapMutex)
+		go startGroupedServiceAsync(ctx, service, serviceString,
+			g.hooks, startErrorCh, runErrorChannels, runErrorMapMutex)
 		// assume all the services are going to be running
 		g.runningServices[serviceString] = struct{}{}
 	}
@@ -102,7 +107,7 @@ func (g *Group) Start() (runError <-chan error, startErr error) {
 		delete(g.runningServices, serviceErr.serviceName)
 
 		if startErr == nil {
-			startErr = serviceErr
+			startErr = addCtxErrorIfNeeded(serviceErr, ctx.Err())
 		}
 	}
 
@@ -136,11 +141,11 @@ func (g *Group) Start() (runError <-chan error, startErr error) {
 	return runErrorCh, nil
 }
 
-func startGroupedServiceAsync(service Starter, serviceString string,
-	hooks Hooks, startErrorCh chan<- *serviceError,
+func startGroupedServiceAsync(ctx context.Context, service Starter,
+	serviceString string, hooks Hooks, startErrorCh chan<- *serviceError,
 	runErrorChannels map[string]<-chan error, mutex *sync.Mutex) {
 	hooks.OnStart(serviceString)
-	runError, err := service.Start()
+	runError, err := service.Start(ctx)
 	hooks.OnStarted(serviceString, err)
 
 	if err != nil {
