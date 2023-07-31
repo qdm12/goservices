@@ -2,7 +2,8 @@ package goservices
 
 import "fmt"
 
-// State is the State of a service.
+// State is the state of a service.
+// Is it exported to ease the implementation of services.
 type State uint8
 
 const (
@@ -31,6 +32,6 @@ func (s State) String() string {
 	case StateCrashed:
 		return "crashed"
 	default:
-		panic(fmt.Sprintf("State %d has not corresponding string", s))
+		panic(fmt.Sprintf("State %d has no corresponding string", s))
 	}
 }

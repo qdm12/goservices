@@ -139,6 +139,22 @@ func Test_errorsFanIn_fanIn(t *testing.T) {
 		}
 	})
 
+	t.Run("input_closed", func(t *testing.T) {
+		t.Parallel()
+
+		e := &errorsFanIn{}
+		input := make(chan error)
+		close(input)
+		done := make(chan struct{})
+		ready := make(chan struct{})
+
+		const expectedPanicMessage = "run error service channel closed unexpectedly"
+		assert.PanicsWithValue(t, expectedPanicMessage, func() {
+			e.fanIn("", input, ready, nil, done)
+		})
+		<-done
+	})
+
 	t.Run("discard_input_errors_after_first", func(t *testing.T) {
 		t.Parallel()
 		errTest := errors.New("test error")

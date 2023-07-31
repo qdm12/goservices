@@ -45,4 +45,14 @@ func Test_State_String(t *testing.T) {
 			assert.Equal(t, testCase.result, result)
 		})
 	}
+
+	t.Run("unknown state", func(t *testing.T) {
+		t.Parallel()
+
+		state := State(255)
+		const expectedPanicMessage = "State 255 has no corresponding string"
+		assert.PanicsWithValue(t, expectedPanicMessage, func() {
+			_ = state.String()
+		})
+	})
 }

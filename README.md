@@ -30,7 +30,7 @@ type Service interface {
 
 ## Stability
 
-- the code is **fully test covered** (99.6% - 0.4% being unreachable panic cases)
+- the code is **fully test covered**
 - Zero dependency (except for tests)
 - the Go API is NOT guaranteed to be stable yet, but it should stay stable for a while
 - the code is **linted** with `golangci-lint` and a lot of linters
