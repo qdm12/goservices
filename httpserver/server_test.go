@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"regexp"
 	"testing"
@@ -60,6 +61,22 @@ func Test_New(t *testing.T) {
 		})
 	}
 }
+
+func Test_Server_String(t *testing.T) {
+	t.Parallel()
+
+	server := &Server{
+		settings: Settings{
+			Name: stringPtr("test"),
+		},
+	}
+
+	assert.Equal(t, "test http server", server.String())
+
+	server.settings.Name = stringPtr("")
+	assert.Equal(t, "http server", server.String())
+}
+
 func Test_Server_GetAddress(t *testing.T) {
 	t.Parallel()
 
@@ -76,26 +93,37 @@ func Test_Server_success(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	logger := NewMockInfoer(ctrl)
 	logger.EXPECT().Info(newRegexMatcher("^test http server listening on 127.0.0.1:[1-9][0-9]{0,4}$"))
 
-	server := &Server{
-		settings: Settings{
-			Name:            stringPtr("test"),
-			Address:         stringPtr("127.0.0.1:0"),
-			ShutdownTimeout: 10 * time.Second,
-			Logger:          logger,
-		},
-	}
+	server, err := New(Settings{
+		Handler:         handler,
+		Name:            stringPtr("test"),
+		Address:         stringPtr("127.0.0.1:0"),
+		ShutdownTimeout: 10 * time.Second,
+		Logger:          logger,
+	})
+	require.NoError(t, err)
 
-	serverService := goservices.NewRunWrapper("server", server.run)
-
-	runError, err := serverService.Start(context.Background())
+	runError, err := server.Start(context.Background())
 	require.NoError(t, err)
 
 	addressRegex := regexp.MustCompile(`^127.0.0.1:[1-9][0-9]{0,4}$`)
 	address := server.GetAddress()
 	assert.Regexp(t, addressRegex, address)
+
+	client := &http.Client{
+		Timeout: time.Second,
+	}
+	_, port, err := net.SplitHostPort(address)
+	require.NoError(t, err)
+	response, err := client.Get("http://localhost:" + port)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	select {
 	case err := <-runError:
@@ -103,7 +131,7 @@ func Test_Server_success(t *testing.T) {
 	default:
 	}
 
-	err = serverService.Stop()
+	err = server.Stop()
 	require.NoError(t, err)
 }
 
