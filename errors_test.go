@@ -1,6 +1,7 @@
 package goservices
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -96,12 +97,70 @@ func Test_addStopError(t *testing.T) {
 			newCollected := addStopError(testCase.collected, testCase.serviceName,
 				testCase.newErr)
 
+			if len(testCase.newCollectedErrors) == 0 {
+				assert.NoError(t, newCollected)
+				return
+			}
+
 			for _, err := range testCase.newCollectedErrors {
 				assert.ErrorIs(t, newCollected, err)
 			}
-			if testCase.newCollectedMessage != "" {
-				assert.EqualError(t, newCollected, testCase.newCollectedMessage)
+			assert.EqualError(t, newCollected, testCase.newCollectedMessage)
+		})
+	}
+}
+
+func Test_addCtxErrorIfNeeded(t *testing.T) {
+	t.Parallel()
+
+	errTest := errors.New("test error")
+
+	testCases := map[string]struct {
+		serviceErr    error
+		ctxErr        error
+		resultErrors  []error
+		resultMessage string
+	}{
+		"all_nils": {},
+		"service_error_only": {
+			serviceErr:    errTest,
+			resultErrors:  []error{errTest},
+			resultMessage: "test error",
+		},
+		"ctx_error_only": {
+			ctxErr:        errTest,
+			resultErrors:  []error{errTest},
+			resultMessage: "test error",
+		},
+		"service_is_ctx_error": {
+			serviceErr:    fmt.Errorf("service crashed: %w", context.Canceled),
+			ctxErr:        context.Canceled,
+			resultErrors:  []error{context.Canceled},
+			resultMessage: "service crashed: context canceled",
+		},
+		"service_and_ctx_distinct_errors": {
+			serviceErr:    errTest,
+			ctxErr:        context.Canceled,
+			resultErrors:  []error{errTest, context.Canceled},
+			resultMessage: "test error: context canceled",
+		},
+	}
+
+	for name, testCase := range testCases {
+		testCase := testCase
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			result := addCtxErrorIfNeeded(testCase.serviceErr, testCase.ctxErr)
+
+			if len(testCase.resultErrors) == 0 {
+				assert.NoError(t, result)
+				return
 			}
+			for _, err := range testCase.resultErrors {
+				assert.ErrorIs(t, result, err)
+			}
+			assert.EqualError(t, result, testCase.resultMessage)
 		})
 	}
 }

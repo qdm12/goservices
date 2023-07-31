@@ -53,8 +53,8 @@ func (s *Server) GetAddress() (address string) {
 	return s.listeningAddress
 }
 
-func (s *Server) Start() (runError <-chan error, err error) {
-	return s.service.Start()
+func (s *Server) Start(ctx context.Context) (runError <-chan error, err error) {
+	return s.service.Start(ctx)
 }
 
 func (s *Server) Stop() (err error) {

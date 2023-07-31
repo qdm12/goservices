@@ -56,3 +56,21 @@ func addStopError(collected error, serviceName string,
 	}
 	return fmt.Errorf("%w; %w", collected, newErr)
 }
+
+// addCtxErrorIfNeeded adds the ctxErr to the serviceErr if
+// ctxErr is not nil and the serviceErr does not wrap the ctxErr
+// already.
+// This is done in case one of the services implementation do not
+// wrap the context error in its error, if its start context is
+// canceled.
+func addCtxErrorIfNeeded(serviceErr, ctxErr error) (result error) {
+	switch {
+	case ctxErr == nil:
+		return serviceErr
+	case serviceErr == nil:
+		return ctxErr
+	case errors.Is(serviceErr, ctxErr):
+		return serviceErr
+	}
+	return fmt.Errorf("%w: %w", serviceErr, ctxErr)
+}

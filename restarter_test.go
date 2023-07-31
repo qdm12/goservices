@@ -1,6 +1,7 @@
 package goservices
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"testing"
@@ -77,6 +78,7 @@ func Test_Restarter_Start(t *testing.T) {
 	t.Run("error if already running", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		service := NewMockService(ctrl)
 		service.EXPECT().String().Return("A")
@@ -86,7 +88,7 @@ func Test_Restarter_Start(t *testing.T) {
 			state:   StateRunning,
 		}
 
-		_, err := restarter.Start()
+		_, err := restarter.Start(ctx)
 
 		assert.ErrorIs(t, err, ErrAlreadyStarted)
 		assert.EqualError(t, err, "A: already started")
@@ -95,6 +97,7 @@ func Test_Restarter_Start(t *testing.T) {
 	t.Run("service first start error", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 
@@ -102,7 +105,7 @@ func Test_Restarter_Start(t *testing.T) {
 		service.EXPECT().String().Return("A") // Start method
 		hooks.EXPECT().OnStart("A")
 		errTest := errors.New("test error")
-		service.EXPECT().Start().Return(nil, errTest)
+		service.EXPECT().Start(ctx).Return(nil, errTest)
 		hooks.EXPECT().OnStarted("A", errTest)
 
 		settings := RestarterSettings{
@@ -113,7 +116,7 @@ func Test_Restarter_Start(t *testing.T) {
 		restarter, err := NewRestarter(settings)
 		require.NoError(t, err)
 
-		runError, err := restarter.Start()
+		runError, err := restarter.Start(ctx)
 
 		assert.Nil(t, runError)
 		assert.ErrorIs(t, err, errTest)
@@ -123,6 +126,7 @@ func Test_Restarter_Start(t *testing.T) {
 	t.Run("restart service multiple times", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 		service := NewMockService(ctrl)
@@ -130,7 +134,7 @@ func Test_Restarter_Start(t *testing.T) {
 		service.EXPECT().String().Return("A") // Start method
 		hooks.EXPECT().OnStart("A")
 		runErrorService := make(chan error, 1)
-		service.EXPECT().Start().Return(runErrorService, nil)
+		service.EXPECT().Start(ctx).Return(runErrorService, nil)
 		hooks.EXPECT().OnStarted("A", nil)
 
 		settings := RestarterSettings{
@@ -141,7 +145,7 @@ func Test_Restarter_Start(t *testing.T) {
 		restarter, err := NewRestarter(settings)
 		require.NoError(t, err)
 
-		runError, err := restarter.Start()
+		runError, err := restarter.Start(ctx)
 		require.NoError(t, err)
 		require.Equal(t, StateRunning, restarter.state)
 
@@ -154,7 +158,7 @@ func Test_Restarter_Start(t *testing.T) {
 			hooks.EXPECT().OnCrash("A", errTest)
 			hooks.EXPECT().OnStart("A")
 			nextRunErrorService := make(chan error, 1)
-			service.EXPECT().Start().Return(nextRunErrorService, nil)
+			service.EXPECT().Start(ctx).Return(nextRunErrorService, nil)
 			hooks.EXPECT().OnStarted("A", nil).Do(func(_ string, _ error) {
 				wg.Done()
 			})
@@ -193,6 +197,7 @@ func Test_Restarter_Start(t *testing.T) {
 	t.Run("restart service fails", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 		service := NewMockService(ctrl)
@@ -200,7 +205,7 @@ func Test_Restarter_Start(t *testing.T) {
 		service.EXPECT().String().Return("A") // Start method
 		hooks.EXPECT().OnStart("A")
 		runErrorService := make(chan error, 1)
-		service.EXPECT().Start().Return(runErrorService, nil)
+		service.EXPECT().Start(ctx).Return(runErrorService, nil)
 		hooks.EXPECT().OnStarted("A", nil)
 
 		settings := RestarterSettings{
@@ -211,7 +216,7 @@ func Test_Restarter_Start(t *testing.T) {
 		restarter, err := NewRestarter(settings)
 		require.NoError(t, err)
 
-		runError, err := restarter.Start()
+		runError, err := restarter.Start(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, StateRunning, restarter.state)
 
@@ -220,7 +225,7 @@ func Test_Restarter_Start(t *testing.T) {
 		hooks.EXPECT().OnCrash("A", errTest)
 		hooks.EXPECT().OnStart("A")
 		errStartTest := errors.New("test error")
-		service.EXPECT().Start().Return(nil, errStartTest)
+		service.EXPECT().Start(ctx).Return(nil, errStartTest)
 		hooks.EXPECT().OnStarted("A", errStartTest)
 
 		// Trigger restart
@@ -273,6 +278,7 @@ func Test_Restarter_interceptRunError(t *testing.T) {
 	t.Run("restart success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		service := NewMockService(ctrl)
 		hooks := NewMockHooks(ctrl)
@@ -294,7 +300,7 @@ func Test_Restarter_interceptRunError(t *testing.T) {
 		errTest := errors.New("test error")
 		hooks.EXPECT().OnCrash(serviceName, errTest)
 		hooks.EXPECT().OnStart(serviceName)
-		service.EXPECT().Start().Return(nil, nil)
+		service.EXPECT().Start(ctx).Return(nil, nil)
 		hooks.EXPECT().OnStarted(serviceName, nil)
 		input <- errTest
 		close(input)
@@ -306,6 +312,7 @@ func Test_Restarter_interceptRunError(t *testing.T) {
 	t.Run("restart failure", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		service := NewMockService(ctrl)
 		hooks := NewMockHooks(ctrl)
@@ -328,7 +335,7 @@ func Test_Restarter_interceptRunError(t *testing.T) {
 		hooks.EXPECT().OnCrash(serviceName, errTest)
 		hooks.EXPECT().OnStart(serviceName)
 		errStartTest := errors.New("test start error")
-		service.EXPECT().Start().Return(nil, errStartTest)
+		service.EXPECT().Start(ctx).Return(nil, errStartTest)
 		hooks.EXPECT().OnStarted(serviceName, errStartTest)
 		input <- errTest
 		close(input)

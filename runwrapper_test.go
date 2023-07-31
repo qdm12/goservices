@@ -3,6 +3,7 @@ package goservices
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,7 +47,7 @@ func Test_RunWrapper_Start(t *testing.T) {
 			state: StateRunning,
 		}
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 
 		assert.Nil(t, runError)
 		assert.ErrorIs(t, err, ErrAlreadyStarted)
@@ -67,11 +68,35 @@ func Test_RunWrapper_Start(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 
 		assert.Nil(t, runError)
 		assert.ErrorIs(t, err, errTest)
 		assert.EqualError(t, err, "test error")
+		assertMutexUnlocked(t, &wrapper.startStopMutex)
+		assertMutexUnlocked(t, &wrapper.stateMutex)
+	})
+
+	t.Run("start_context_canceled", func(t *testing.T) {
+		t.Parallel()
+
+		run := func(ctx context.Context, ready chan<- struct{},
+			runError, stopError chan<- error) {
+			<-ctx.Done()
+			runError <- fmt.Errorf("service: %w", context.Canceled)
+		}
+
+		wrapper := NewRunWrapper("name", run)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		<-ctx.Done()
+
+		runError, err := wrapper.Start(ctx)
+
+		assert.Nil(t, runError)
+		assert.ErrorIs(t, err, context.Canceled)
+		assert.EqualError(t, err, "service: context canceled")
 		assertMutexUnlocked(t, &wrapper.startStopMutex)
 		assertMutexUnlocked(t, &wrapper.stateMutex)
 	})
@@ -88,7 +113,7 @@ func Test_RunWrapper_Start(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 
 		require.NoError(t, err)
 
@@ -117,7 +142,7 @@ func Test_RunWrapper_Start(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 
 		require.NoError(t, err)
 

@@ -1,6 +1,7 @@
 package goservices
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -104,7 +105,7 @@ func Test_Sequence_Start(t *testing.T) {
 			state: StateRunning,
 		}
 
-		_, err := sequence.Start()
+		_, err := sequence.Start(context.Background())
 
 		assert.ErrorIs(t, err, ErrAlreadyStarted)
 		assert.EqualError(t, err, "sequence name: already started")
@@ -115,12 +116,13 @@ func Test_Sequence_Start(t *testing.T) {
 		ctrl := gomock.NewController(t)
 
 		hooks := NewMockHooks(ctrl)
+		ctx := context.Background()
 
 		serviceA := NewMockService(ctrl)
 		serviceA.EXPECT().String().Return("A").Times(2) // settings validation
 		hooks.EXPECT().OnStart("A")
 		serviceA.EXPECT().String().Return("A") // Start method
-		serviceA.EXPECT().Start().Return(nil, errTest)
+		serviceA.EXPECT().Start(ctx).Return(nil, errTest)
 		hooks.EXPECT().OnStarted("A", errTest)
 		serviceA.EXPECT().String().Return("A") // stop method
 
@@ -137,7 +139,7 @@ func Test_Sequence_Start(t *testing.T) {
 		sequence, err := NewSequence(settings)
 		require.NoError(t, err)
 
-		runError, err := sequence.Start()
+		runError, err := sequence.Start(ctx)
 
 		assert.Nil(t, runError)
 		assert.ErrorIs(t, err, errTest)
@@ -149,20 +151,21 @@ func Test_Sequence_Start(t *testing.T) {
 		ctrl := gomock.NewController(t)
 
 		hooks := NewMockHooks(ctrl)
+		ctx := context.Background()
 
 		serviceA := NewMockService(ctrl)
 		serviceA.EXPECT().String().Return("A").Times(2) // settings validation
 		hooks.EXPECT().OnStart("A")
 		serviceA.EXPECT().String().Return("A") // start method
 		runErrorA := make(chan error)
-		serviceA.EXPECT().Start().Return(runErrorA, nil)
+		serviceA.EXPECT().Start(ctx).Return(runErrorA, nil)
 		hooks.EXPECT().OnStarted("A", nil)
 
 		serviceB := NewMockService(ctrl)
 		serviceB.EXPECT().String().Return("B").Times(2) // settings validation
 		hooks.EXPECT().OnStart("B")
 		serviceB.EXPECT().String().Return("B") // start method
-		serviceB.EXPECT().Start().Return(nil, errTest)
+		serviceB.EXPECT().Start(ctx).Return(nil, errTest)
 		hooks.EXPECT().OnStarted("B", errTest)
 
 		serviceB.EXPECT().String().Return("B") // stop method
@@ -180,7 +183,7 @@ func Test_Sequence_Start(t *testing.T) {
 		sequence, err := NewSequence(settings)
 		require.NoError(t, err)
 
-		runError, err := sequence.Start()
+		runError, err := sequence.Start(ctx)
 
 		assert.Nil(t, runError)
 		assert.ErrorIs(t, err, errTest)
@@ -192,13 +195,14 @@ func Test_Sequence_Start(t *testing.T) {
 		ctrl := gomock.NewController(t)
 
 		hooks := NewMockHooks(ctrl)
+		ctx := context.Background()
 
 		serviceA := NewMockService(ctrl)
 		serviceA.EXPECT().String().Return("A").Times(2) // settings validation
 		hooks.EXPECT().OnStart("A")
 		serviceA.EXPECT().String().Return("A") // Start method
 		runErrorA := make(chan error)
-		serviceA.EXPECT().Start().Return(runErrorA, nil)
+		serviceA.EXPECT().Start(ctx).Return(runErrorA, nil)
 		hooks.EXPECT().OnStarted("A", nil)
 
 		serviceB := NewMockService(ctrl)
@@ -206,7 +210,7 @@ func Test_Sequence_Start(t *testing.T) {
 		hooks.EXPECT().OnStart("B")
 		serviceB.EXPECT().String().Return("B") // Start method
 		runErrorB := make(chan error)
-		serviceB.EXPECT().Start().Return(runErrorB, nil)
+		serviceB.EXPECT().Start(ctx).Return(runErrorB, nil)
 		hooks.EXPECT().OnStarted("B", nil)
 
 		settings := SequenceSettings{
@@ -218,7 +222,7 @@ func Test_Sequence_Start(t *testing.T) {
 		sequence, err := NewSequence(settings)
 		require.NoError(t, err)
 
-		runError, err := sequence.Start()
+		runError, err := sequence.Start(ctx)
 
 		require.NoError(t, err)
 		require.NotNil(t, runError)
@@ -247,6 +251,7 @@ func Test_Sequence_Start(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 
@@ -254,14 +259,14 @@ func Test_Sequence_Start(t *testing.T) {
 		serviceA.EXPECT().String().Return("A").Times(4)
 		hooks.EXPECT().OnStart("A")
 		runErrorA := make(chan error)
-		serviceA.EXPECT().Start().Return(runErrorA, nil)
+		serviceA.EXPECT().Start(ctx).Return(runErrorA, nil)
 		hooks.EXPECT().OnStarted("A", nil)
 
 		serviceB := NewMockService(ctrl)
 		serviceB.EXPECT().String().Return("B").Times(4)
 		hooks.EXPECT().OnStart("B")
 		runErrorB := make(chan error)
-		serviceB.EXPECT().Start().Return(runErrorB, nil)
+		serviceB.EXPECT().Start(ctx).Return(runErrorB, nil)
 		hooks.EXPECT().OnStarted("B", nil)
 
 		settings := SequenceSettings{
@@ -273,7 +278,7 @@ func Test_Sequence_Start(t *testing.T) {
 		sequence, err := NewSequence(settings)
 		require.NoError(t, err)
 
-		runError, startErr := sequence.Start()
+		runError, startErr := sequence.Start(ctx)
 		require.NoError(t, startErr)
 
 		// Stop service B since A crashes

@@ -94,7 +94,9 @@ func (w *RunWrapper) String() string {
 // on to catch an eventual run error from the underlying run function,
 // as well as a `startErr` error which can be non-nil if the service
 // failed to start.
-func (w *RunWrapper) Start() (runError <-chan error, startErr error) {
+// Start takes in a context which is monitored for until the run function
+// signals it is ready by closing its ready channel.
+func (w *RunWrapper) Start(startCtx context.Context) (runError <-chan error, startErr error) {
 	// Prevent concurrent Start and Stop calls.
 	w.startStopMutex.Lock()
 	defer w.startStopMutex.Unlock()
@@ -129,14 +131,35 @@ func (w *RunWrapper) Start() (runError <-chan error, startErr error) {
 
 	var ctx context.Context
 	ctx, w.cancel = context.WithCancel(context.Background())
+
+	// Listen on the injected start context until the run
+	// function signals it is ready.
+	stopListenOnStartCtx := make(chan struct{})
+	doneListenOnStartCtx := make(chan struct{})
+	go func() {
+		defer close(doneListenOnStartCtx)
+		select {
+		case <-startCtx.Done():
+			// Cancel the run context injected to the run
+			// function is the start context is canceled.
+			w.cancel()
+		case <-stopListenOnStartCtx:
+		}
+	}()
+
 	runReady := make(chan struct{})
-	go w.run(ctx, runReady, runErrorToInject, stopError)
+	go w.run(ctx, runReady, runErrorToInject, stopError) //nolint:contextcheck
 
 	// Check if there is a run error before the ready channel is closed.
 	// That would effectively represent a start error.
 	select {
 	case <-runReady:
 	case startErr = <-runErrorToReturn:
+	}
+
+	close(stopListenOnStartCtx)
+	<-doneListenOnStartCtx
+	if startErr != nil {
 		<-w.interceptDone
 		return nil, startErr
 	}

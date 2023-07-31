@@ -22,7 +22,7 @@ func Test_RunWrapper(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 		assert.Nil(t, runError)
 		assert.ErrorIs(t, err, errTest)
 		assert.EqualError(t, err, "test error")
@@ -43,7 +43,7 @@ func Test_RunWrapper(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 		assert.NoError(t, err)
 
 		const waitForErrorDuration = 10 * time.Millisecond
@@ -72,7 +72,7 @@ func Test_RunWrapper(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 		assert.NoError(t, err)
 
 		const waitForErrorDuration = 10 * time.Millisecond
@@ -101,7 +101,7 @@ func Test_RunWrapper(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 		assert.NoError(t, err)
 		assertRunError(t, runError, errTest)
 
@@ -129,7 +129,7 @@ func Test_RunWrapper(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 		assert.NoError(t, err)
 
 		const waitForRunErrorDuration = time.Second
@@ -162,7 +162,7 @@ func Test_RunWrapper(t *testing.T) {
 
 		wrapper := NewRunWrapper("name", run)
 
-		runError, err := wrapper.Start()
+		runError, err := wrapper.Start(context.Background())
 		assert.NoError(t, err)
 		assertNoRunError(t, runError)
 

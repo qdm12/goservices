@@ -18,7 +18,9 @@ type Service interface {
  // the error channel.
  // When the service is stopped, the service should NOT send an error
  // in the run error channel or close this one.
- Start() (runError <-chan error, startErr error)
+ // Start takes in a context and the implementation should promptly return
+ // the context error wrapped in `startErr` if the context is canceled.
+ Start(ctx context.Context) (runError <-chan error, startErr error)
  // Stops stops the service.
  // A service should NOT close or write an error to its run error channel
  // if it is stopped.
@@ -28,7 +30,7 @@ type Service interface {
 
 ## Stability
 
-- the code is **fully test covered** (98.8% - 1.2% being unreachable panic cases)
+- the code is **fully test covered** (99.2% - 0.8% being unreachable panic cases)
 - Zero dependency (except for tests)
 - the Go API is NOT guaranteed to be stable yet, but it should stay stable for a while
 - the code is **linted** with `golangci-lint` and a lot of linters

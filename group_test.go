@@ -1,6 +1,7 @@
 package goservices
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -102,7 +103,7 @@ func Test_Group_Start(t *testing.T) {
 			state: StateRunning,
 		}
 
-		_, err := group.Start()
+		_, err := group.Start(context.Background())
 
 		assert.ErrorIs(t, err, ErrAlreadyStarted)
 		assert.EqualError(t, err, "group name: already started")
@@ -111,6 +112,7 @@ func Test_Group_Start(t *testing.T) {
 	t.Run("one service of two start error", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 
@@ -118,7 +120,7 @@ func Test_Group_Start(t *testing.T) {
 		serviceA.EXPECT().String().Return("A").Times(2) // settings validation
 		hooks.EXPECT().OnStart("A")
 		serviceA.EXPECT().String().Return("A") // Start method
-		serviceA.EXPECT().Start().Return(nil, errTest)
+		serviceA.EXPECT().Start(ctx).Return(nil, errTest)
 		hooks.EXPECT().OnStarted("A", errTest)
 		serviceA.EXPECT().String().Return("A") // stop method
 
@@ -126,7 +128,7 @@ func Test_Group_Start(t *testing.T) {
 		serviceB.EXPECT().String().Return("B").Times(2) // settings validation
 		hooks.EXPECT().OnStart("B")
 		serviceB.EXPECT().String().Return("B") // Start method
-		serviceB.EXPECT().Start().Return(nil, nil)
+		serviceB.EXPECT().Start(ctx).Return(nil, nil)
 		hooks.EXPECT().OnStarted("B", nil)
 		serviceB.EXPECT().String().Return("B") // stop method
 		hooks.EXPECT().OnStop("B")
@@ -141,7 +143,7 @@ func Test_Group_Start(t *testing.T) {
 		group, err := NewGroup(settings)
 		require.NoError(t, err)
 
-		runError, err := group.Start()
+		runError, err := group.Start(ctx)
 
 		assert.Nil(t, runError)
 		assert.ErrorIs(t, err, errTest)
@@ -151,6 +153,7 @@ func Test_Group_Start(t *testing.T) {
 	t.Run("two services of two start error", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 
@@ -158,7 +161,7 @@ func Test_Group_Start(t *testing.T) {
 		serviceA.EXPECT().String().Return("A").Times(2) // settings validation
 		hooks.EXPECT().OnStart("A")
 		serviceA.EXPECT().String().Return("A") // Start method
-		serviceA.EXPECT().Start().Return(nil, errTest)
+		serviceA.EXPECT().Start(ctx).Return(nil, errTest)
 		hooks.EXPECT().OnStarted("A", errTest)
 		serviceA.EXPECT().String().Return("A") // stop method
 
@@ -166,7 +169,7 @@ func Test_Group_Start(t *testing.T) {
 		serviceB.EXPECT().String().Return("B").Times(2) // settings validation
 		hooks.EXPECT().OnStart("B")
 		serviceB.EXPECT().String().Return("B") // Start method
-		serviceB.EXPECT().Start().Return(nil, errTest)
+		serviceB.EXPECT().Start(ctx).Return(nil, errTest)
 		hooks.EXPECT().OnStarted("B", errTest)
 		serviceB.EXPECT().String().Return("B") // stop method
 
@@ -178,7 +181,7 @@ func Test_Group_Start(t *testing.T) {
 		group, err := NewGroup(settings)
 		require.NoError(t, err)
 
-		runError, err := group.Start()
+		runError, err := group.Start(ctx)
 
 		assert.Nil(t, runError)
 		require.ErrorIs(t, err, errTest)
@@ -188,6 +191,7 @@ func Test_Group_Start(t *testing.T) {
 	t.Run("start success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 
@@ -196,7 +200,7 @@ func Test_Group_Start(t *testing.T) {
 		hooks.EXPECT().OnStart("A")
 		serviceA.EXPECT().String().Return("A") // Start method
 		runErrorA := make(chan error)
-		serviceA.EXPECT().Start().Return(runErrorA, nil)
+		serviceA.EXPECT().Start(ctx).Return(runErrorA, nil)
 		hooks.EXPECT().OnStarted("A", nil)
 
 		serviceB := NewMockService(ctrl)
@@ -204,7 +208,7 @@ func Test_Group_Start(t *testing.T) {
 		hooks.EXPECT().OnStart("B")
 		serviceB.EXPECT().String().Return("B") // Start method
 		runErrorB := make(chan error)
-		serviceB.EXPECT().Start().Return(runErrorB, nil)
+		serviceB.EXPECT().Start(ctx).Return(runErrorB, nil)
 		hooks.EXPECT().OnStarted("B", nil)
 
 		settings := GroupSettings{
@@ -215,7 +219,7 @@ func Test_Group_Start(t *testing.T) {
 		group, err := NewGroup(settings)
 		require.NoError(t, err)
 
-		runError, err := group.Start()
+		runError, err := group.Start(ctx)
 
 		require.NoError(t, err)
 		require.NotNil(t, runError)
@@ -244,6 +248,7 @@ func Test_Group_Start(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
+		ctx := context.Background()
 
 		hooks := NewMockHooks(ctrl)
 
@@ -251,14 +256,14 @@ func Test_Group_Start(t *testing.T) {
 		serviceA.EXPECT().String().Return("A").Times(4)
 		hooks.EXPECT().OnStart("A")
 		runErrorA := make(chan error)
-		serviceA.EXPECT().Start().Return(runErrorA, nil)
+		serviceA.EXPECT().Start(ctx).Return(runErrorA, nil)
 		hooks.EXPECT().OnStarted("A", nil)
 
 		serviceB := NewMockService(ctrl)
 		serviceB.EXPECT().String().Return("B").Times(4)
 		hooks.EXPECT().OnStart("B")
 		runErrorB := make(chan error)
-		serviceB.EXPECT().Start().Return(runErrorB, nil)
+		serviceB.EXPECT().Start(ctx).Return(runErrorB, nil)
 		hooks.EXPECT().OnStarted("B", nil)
 
 		settings := GroupSettings{
@@ -269,7 +274,7 @@ func Test_Group_Start(t *testing.T) {
 		group, err := NewGroup(settings)
 		require.NoError(t, err)
 
-		runError, startErr := group.Start()
+		runError, startErr := group.Start(ctx)
 		require.NoError(t, startErr)
 
 		// Stop service B since A crashes

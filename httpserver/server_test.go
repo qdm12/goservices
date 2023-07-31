@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 	"testing"
@@ -89,7 +90,7 @@ func Test_Server_success(t *testing.T) {
 
 	serverService := goservices.NewRunWrapper("server", server.run)
 
-	runError, err := serverService.Start()
+	runError, err := serverService.Start(context.Background())
 	require.NoError(t, err)
 
 	addressRegex := regexp.MustCompile(`^127.0.0.1:[1-9][0-9]{0,4}$`)
@@ -118,7 +119,7 @@ func Test_Server_startError(t *testing.T) {
 
 	serverService := goservices.NewRunWrapper("server", server.run)
 
-	runtimeError, err := serverService.Start()
+	runtimeError, err := serverService.Start(context.Background())
 
 	require.EqualError(t, err, "listen tcp: address -1: invalid port")
 	assert.Nil(t, runtimeError)
