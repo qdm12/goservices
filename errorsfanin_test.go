@@ -111,6 +111,76 @@ func Test_errorsFanIn_fanIn(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("stop_and_input_race", func(t *testing.T) {
+		t.Parallel()
+
+		e := &errorsFanIn{
+			output: make(chan serviceError),
+		}
+		input := make(chan error, 1)
+		input <- errors.New("test error")
+		stop := make(chan struct{})
+		close(stop)
+		done := make(chan struct{})
+		ready := make(chan struct{})
+
+		e.fanIn("", input, ready, stop, done)
+
+		_, ok := <-ready
+		assert.False(t, ok)
+		_, ok = <-done
+		assert.False(t, ok)
+
+		// Check input is drained
+		select {
+		case <-input:
+			t.Error("input channel is not drained")
+		default:
+		}
+	})
+
+	t.Run("discard_input_errors_after_first", func(t *testing.T) {
+		t.Parallel()
+		errTest := errors.New("test error")
+
+		e := &errorsFanIn{
+			output: make(chan serviceError, 1),
+		}
+
+		input := make(chan error, 1)
+		stop := make(chan struct{})
+
+		service := "A"
+		done := make(chan struct{})
+		ready := make(chan struct{})
+		input <- errTest
+		e.fanIn(service, input, ready, stop, done)
+
+		_, ok := <-ready
+		assert.False(t, ok)
+		err := <-e.output
+		checkErrIsErrTest(t, err, service, errTest)
+		// Check output is now closed
+		_, ok = <-e.output
+		assert.False(t, ok)
+		_, ok = <-done
+		assert.False(t, ok)
+
+		service = "B"
+		done = make(chan struct{})
+		ready = make(chan struct{})
+		input <- errTest
+		e.fanIn(service, input, ready, stop, done)
+
+		_, ok = <-ready
+		assert.False(t, ok)
+		// Check output remains closed
+		_, ok = <-e.output
+		assert.False(t, ok)
+		_, ok = <-done
+		assert.False(t, ok)
+	})
+
 	t.Run("fan in error", func(t *testing.T) {
 		t.Parallel()
 
