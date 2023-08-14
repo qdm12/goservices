@@ -121,8 +121,11 @@ func Test_Server_success(t *testing.T) {
 	}
 	_, port, err := net.SplitHostPort(address)
 	require.NoError(t, err)
-	response, err := client.Get("http://localhost:" + port)
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://localhost:"+port, nil)
 	require.NoError(t, err)
+	response, err := client.Do(request)
+	require.NoError(t, err)
+	_ = response.Body.Close()
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	select {

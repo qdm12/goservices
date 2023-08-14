@@ -55,7 +55,7 @@ func (s *Sequence) String() string {
 }
 
 // Start starts services in the order specified by the
-// the sequence of services.
+// sequence of services.
 //
 // If a service fails to start, the `startErr` is returned
 // and all other running services are stopped in the order
