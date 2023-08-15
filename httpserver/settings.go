@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Settings is the settings for the HTTP server service.
 type Settings struct {
 	// Handler is the HTTP handler to use.
 	// It must be set for settings validation to pass.
@@ -30,6 +31,7 @@ type Settings struct {
 	Logger Infoer
 }
 
+// SetDefaults sets the default values for the settings.
 func (s *Settings) SetDefaults() {
 	if s.Name == nil {
 		s.Name = new(string)
@@ -63,6 +65,8 @@ var (
 	ErrHandlerIsNil = errors.New("handler is nil")
 )
 
+// Validate validates the settings and returns an error
+// if any setting is not valid.
 func (s Settings) Validate() (err error) {
 	if s.Handler == nil {
 		return fmt.Errorf("%w", ErrHandlerIsNil)

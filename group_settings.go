@@ -6,6 +6,7 @@ import (
 	"github.com/qdm12/goservices/hooks"
 )
 
+// GroupSettings contains settings for a group of services.
 type GroupSettings struct {
 	// Name is the sequence name, used for hooks and errors.
 	Name string
@@ -19,12 +20,14 @@ type GroupSettings struct {
 	Hooks Hooks
 }
 
+// SetDefaults sets the defaults for the group settings.
 func (s *GroupSettings) SetDefaults() {
 	if s.Hooks == nil {
 		s.Hooks = hooks.NewNoop()
 	}
 }
 
+// Validate validates the group settings.
 func (s GroupSettings) Validate() (err error) {
 	if len(s.Services) == 0 {
 		return fmt.Errorf("%w", ErrNoService)

@@ -8,6 +8,8 @@ import (
 
 var _ Service = (*Group)(nil)
 
+// Group is a group of services to start and stop in parallel.
+// It implements the Service interface itself.
 type Group struct {
 	name            string
 	services        []Service
@@ -21,6 +23,8 @@ type Group struct {
 	interceptDone   chan struct{}
 }
 
+// NewGroup creates a new group of services given the settings,
+// and returns an error if any setting is not valid.
 func NewGroup(settings GroupSettings) (group *Group, err error) {
 	settings.SetDefaults()
 

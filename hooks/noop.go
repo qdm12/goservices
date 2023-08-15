@@ -1,13 +1,25 @@
 package hooks
 
+// NoopHooks implements service handler hooks
+// that do no operation.
 type NoopHooks struct{}
 
+// NewNoop returns a new NoopHooks instance.
 func NewNoop() *NoopHooks {
 	return &NoopHooks{}
 }
 
-func (h *NoopHooks) OnStart(string)          {}
+// OnStart does nothing.
+func (h *NoopHooks) OnStart(string) {}
+
+// OnStarted does nothing.
 func (h *NoopHooks) OnStarted(string, error) {}
-func (h *NoopHooks) OnStop(string)           {}
+
+// OnStop does nothing.
+func (h *NoopHooks) OnStop(string) {}
+
+// OnStopped does nothing.
 func (h *NoopHooks) OnStopped(string, error) {}
-func (h *NoopHooks) OnCrash(string, error)   {}
+
+// OnCrash does nothing.
+func (h *NoopHooks) OnCrash(string, error) {}

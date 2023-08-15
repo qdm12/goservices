@@ -12,6 +12,11 @@ issues:
     - linters:
         - lll
       source: "^//go:generate "
+    - linters:
+        - revive
+      text: "exported var Err.+ should have comment or be unexported"
+  include:
+    - EXC0012
 
 linters:
   enable:

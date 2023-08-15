@@ -8,6 +8,10 @@ import (
 
 var _ Service = (*Restarter)(nil)
 
+// Restarter implements a service which restarts an
+// underlying service if it crashes. The restarter
+// only crashes if the underlying services fails to
+// start on a subsequent run.
 type Restarter struct {
 	service        Service
 	hooks          Hooks
@@ -18,6 +22,8 @@ type Restarter struct {
 	interceptDone  chan struct{}
 }
 
+// NewRestarter creates a new restarter given the settings.
+// It returns an error if any of the settings is not valid.
 func NewRestarter(settings RestarterSettings) (restarter *Restarter, err error) {
 	settings.SetDefaults()
 

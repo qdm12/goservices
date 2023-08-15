@@ -6,6 +6,7 @@ import (
 	"github.com/qdm12/goservices/hooks"
 )
 
+// SequenceSettings contains settings for a sequence of services.
 type SequenceSettings struct {
 	// Name is the sequence name, used for hooks and errors.
 	Name string
@@ -16,16 +17,19 @@ type SequenceSettings struct {
 	// to stop and must be set.
 	ServicesStop []Service
 	// Hooks are hooks to call when starting and stopping
-	// each service.
+	// each service. It defaults to a noop hooks
+	// implementation.
 	Hooks Hooks
 }
 
+// SetDefaults sets the defaults for the sequence settings.
 func (s *SequenceSettings) SetDefaults() {
 	if s.Hooks == nil {
 		s.Hooks = hooks.NewNoop()
 	}
 }
 
+// Validate validates the sequence settings.
 func (s SequenceSettings) Validate() (err error) {
 	switch {
 	case len(s.ServicesStart) == 0:

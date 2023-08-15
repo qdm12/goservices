@@ -2,6 +2,8 @@ package goservices
 
 import "context"
 
+// Service is the interface for a service that can be started,
+// stopped and stringed.
 type Service interface {
 	Starter
 	Stopper
@@ -10,6 +12,7 @@ type Service interface {
 	String() string
 }
 
+// Starter is the interface for a service that can be started.
 type Starter interface {
 	// String returns the starter name.
 	// It is assumed to be constant over the lifetime of the starter.
@@ -26,6 +29,7 @@ type Starter interface {
 	Start(ctx context.Context) (runError <-chan error, startErr error)
 }
 
+// Stopper is the interface for a service that can be stopped.
 type Stopper interface {
 	// String returns the stopper name.
 	// It is assumed to be constant over the lifetime of the stopper.

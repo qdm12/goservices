@@ -8,6 +8,9 @@ import (
 
 var _ Service = (*Sequence)(nil)
 
+// Sequence is a sequence of services to start and stop in
+// a pre-defined order. It implements the Service interface
+// itself.
 type Sequence struct {
 	name           string
 	servicesStart  []Service
@@ -23,6 +26,8 @@ type Sequence struct {
 	interceptDone   chan struct{}
 }
 
+// NewSequence creates a new sequence of services given the settings,
+// and returns an error if any setting is not valid.
 func NewSequence(settings SequenceSettings) (sequence *Sequence, err error) {
 	settings.SetDefaults()
 

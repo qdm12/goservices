@@ -53,10 +53,12 @@ func (s *Server) GetAddress() (address string) {
 	return s.listeningAddress
 }
 
+// Start starts the HTTP server service.
 func (s *Server) Start(ctx context.Context) (runError <-chan error, err error) {
 	return s.service.Start(ctx)
 }
 
+// Stop stops the HTTP server service.
 func (s *Server) Stop() (err error) {
 	return s.service.Stop()
 }
