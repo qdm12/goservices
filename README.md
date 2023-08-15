@@ -31,9 +31,11 @@ type Service interface {
 ## Stability
 
 - the code is **fully test covered**
-- Zero dependency (except for tests)
-- the Go API is NOT guaranteed to be stable yet, but it should stay stable for a while
+- Zero dependency (except for tests with [`golang/mock`](github.com/golang/mock) and [`stretchr/testify`](github.com/stretchr/testify))
+- the Go API should be stable until a v1.0.0 release
+- the Go API will be guaranteed stable from the v1.0.0 release
 - the code is **linted** with `golangci-lint` and a lot of linters
+- There is a CI pipeline to test, lint, check mocks and check documentation on every commit.
 
 ## Sequence of services
 
