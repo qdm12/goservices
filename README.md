@@ -40,21 +40,109 @@ type Service interface {
 To start and stop a sequence of services, you can use the [`Sequence` type](https://github.com/qdm12/goservices/blob/main/sequence.go#L10).
 Note it itself implements the `Service` interface, so you can nest it with other service management types, like `Group`.
 
-🚧 Examples to be added 🚧
+```go
+ ctx := context.Background()
+
+ settings := goservices.SequenceSettings{
+  ServicesStart: []goservices.Service{serviceA, serviceB},
+  ServicesStop:  []goservices.Service{serviceB, serviceA},
+ }
+ sequence, err := goservices.NewSequence(settings)
+ if err != nil {
+  return fmt.Errorf("creating services sequence: %w", err)
+ }
+
+
+ runError, err := sequence.Start(ctx)
+ if err != nil {
+  return fmt.Errorf("starting services sequence: %w", err)
+ }
+
+ select {
+ case err = <-runError:
+  return fmt.Errorf("services sequence crashed: %w", err)
+ case <-ctx.Done():
+  err = sequence.Stop()
+  if err != nil {
+   return fmt.Errorf("stopping services sequence: %w", err)
+  }
+  return nil
+ }
+```
+
+[🏃 runnable example](examples/sequence/main.go)
 
 ## Group of services
 
 To start and stop a group of services all in parallel, you can use the [`Group` type](https://github.com/qdm12/goservices/blob/main/group.go#L10).
 Note it itself implements the `Service` interface, so you can nest it with other service management types, like `Sequence`.
 
-🚧 Examples to be added 🚧
+A simplistic example would be:
+
+```go
+ ctx := context.Background()
+
+ settings := goservices.GroupSettings{
+  Services: []goservices.Service{serviceA, serviceB},
+ }
+ group, err := goservices.NewGroup(settings)
+ if err != nil {
+  return fmt.Errorf("creating services group: %w", err)
+ }
+
+ runError, err := group.Start(ctx)
+ if err != nil {
+  return fmt.Errorf("starting services group: %w", err)
+ }
+
+ select {
+ case err = <-runError:
+  return fmt.Errorf("services group crashed: %w", err)
+ case <-ctx.Done():
+  err = group.Stop()
+  if err != nil {
+   return fmt.Errorf("stopping services group: %w", err)
+  }
+  return nil
+ }
+```
+
+[🏃 runnable example](examples/group/main.go)
 
 ## Auto-restart a service
 
 To automatically restart a service when it crashes, you can use the [`Restarter` type](https://github.com/qdm12/goservices/blob/main/restarter.go#L10).
 Note it itself implements the `Service` interface, so you can nest it with other service management types, like `Sequence`.
 
-🚧 Examples to be added 🚧
+```go
+ ctx := context.Background()
+
+ settings := goservices.RestarterSettings{
+  Service: serviceToRestart,
+ }
+ restarter, err := goservices.NewRestarter(settings)
+ if err != nil {
+  return fmt.Errorf("creating restarter: %w", err)
+ }
+
+ runError, startErr := restarter.Start(ctx)
+ if startErr != nil {
+  return fmt.Errorf("starting restarter: %w", startErr)
+ }
+
+ select {
+ case err = <-runError:
+  return fmt.Errorf("restarter crashed: %w", err)
+ case <-ctx.Done():
+  err = restarter.Stop()
+  if err != nil {
+   return fmt.Errorf("stopping restarter: %w", err)
+  }
+  return nil
+ }
+```
+
+[🏃 runnable example](examples/restarter/main.go)
 
 ## Create a service
 
@@ -69,7 +157,9 @@ type RunFunction func(ctx context.Context,
  ready chan<- struct{}, runError, stopError chan<- error)
 ```
 
-Please see the [documentation of the `RunFunction`](https://github.com/qdm12/goservices/blob/468bda9ee482fcaca953b1b63b6cdabf8b1aa6a6/runwrapper.go#L9-L53) to know the details on how to implement it correctly.
+Please see the [documentation of the `RunFunction`](https://github.com/qdm12/goservices/blob/main/runwrapper.go#L9-L53) to know the details on how to implement it correctly.
+
+A concrete example is the [`httpserver`](httpserver) service which is implemented using this `RunWrapper`.
 
 ## Pre-built services
 
