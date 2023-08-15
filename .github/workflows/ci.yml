@@ -36,3 +36,10 @@ jobs:
           docker run --rm \
           -v "$(pwd)/coverage.txt:/tmp/gobuild/coverage.txt" \
           test-container
+
+      - name: Update dependency graph
+        if: |
+          github.repository == 'qdm12/goservices' &&
+          github.event_name == 'push' &&
+          github.ref == 'refs/heads/main'
+        run: curl -X POST https://gographs.io/graph/github.com/qdm12/goservices.svg

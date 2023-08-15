@@ -31,7 +31,7 @@ type Service interface {
 ## Stability
 
 - the code is **fully test covered**
-- Zero dependency (except for tests with [`golang/mock`](github.com/golang/mock) and [`stretchr/testify`](github.com/stretchr/testify))
+- Zero dependency (except for tests with [`golang/mock`](https://github.com/golang/mock) and [`stretchr/testify`](https://github.com/stretchr/testify)) - [![gographs](https://gographs.io/badge.svg)](https://gographs.io/repo/github.com/qdm12/goservices?cluster=false)
 - the Go API should be stable until a v1.0.0 release
 - the Go API will be guaranteed stable from the v1.0.0 release
 - the code is **linted** with `golangci-lint` and a lot of linters
@@ -168,3 +168,7 @@ A concrete example is the [`httpserver`](httpserver) service which is implemente
 This library provides a few pre-built services:
 
 - [`httpserver`](httpserver)
+
+## Main branch dependency graph
+
+![gographs](https://gographs.io/graph/github.com/qdm12/goservices.svg)
