@@ -37,21 +37,21 @@ type Service interface {
 
 ## Sequence of services
 
-To start and stop a sequence of services, you can use the [`Sequence` type](https://github.com/qdm12/goservices/blob/468bda9ee482fcaca953b1b63b6cdabf8b1aa6a6/sequence.go#L10).
+To start and stop a sequence of services, you can use the [`Sequence` type](https://github.com/qdm12/goservices/blob/main/sequence.go#L10).
 Note it itself implements the `Service` interface, so you can nest it with other service management types, like `Group`.
 
 🚧 Examples to be added 🚧
 
 ## Group of services
 
-To start and stop a group of services all in parallel, you can use the [`Group` type](https://github.com/qdm12/goservices/blob/468bda9ee482fcaca953b1b63b6cdabf8b1aa6a6/group.go#L10).
+To start and stop a group of services all in parallel, you can use the [`Group` type](https://github.com/qdm12/goservices/blob/main/group.go#L10).
 Note it itself implements the `Service` interface, so you can nest it with other service management types, like `Sequence`.
 
 🚧 Examples to be added 🚧
 
 ## Auto-restart a service
 
-To automatically restart a service when it crashes, you can use the [`Restarter` type](https://github.com/qdm12/goservices/blob/468bda9ee482fcaca953b1b63b6cdabf8b1aa6a6/restarter.go#L10).
+To automatically restart a service when it crashes, you can use the [`Restarter` type](https://github.com/qdm12/goservices/blob/main/restarter.go#L10).
 Note it itself implements the `Service` interface, so you can nest it with other service management types, like `Sequence`.
 
 🚧 Examples to be added 🚧
