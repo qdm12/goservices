@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_GroupSettings_SetDefaults(t *testing.T) {
+func Test_GroupSettings_setDefaults(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -35,13 +35,13 @@ func Test_GroupSettings_SetDefaults(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			testCase.originalSettings.SetDefaults()
+			testCase.originalSettings.setDefaults()
 			assert.Equal(t, testCase.defaultedSettings, testCase.originalSettings)
 		})
 	}
 }
 
-func Test_GroupSettings_Validate(t *testing.T) {
+func Test_GroupSettings_validate(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 
@@ -96,7 +96,7 @@ func Test_GroupSettings_Validate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := testCase.settings.Validate()
+			err := testCase.settings.validate()
 
 			assert.ErrorIs(t, err, testCase.errSentinel)
 			if testCase.errSentinel != nil {

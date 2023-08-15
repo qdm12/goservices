@@ -17,15 +17,15 @@ type RestarterSettings struct {
 	Hooks Hooks
 }
 
-// SetDefaults sets the defaults for the restarter settings.
-func (r *RestarterSettings) SetDefaults() {
+// setDefaults sets the defaults for the restarter settings.
+func (r *RestarterSettings) setDefaults() {
 	if r.Hooks == nil {
 		r.Hooks = hooks.NewNoop()
 	}
 }
 
-// Validate validates the restarter settings.
-func (r RestarterSettings) Validate() (err error) {
+// validate validates the restarter settings.
+func (r RestarterSettings) validate() (err error) {
 	if r.Service == nil {
 		return fmt.Errorf("%w", ErrNoService)
 	}

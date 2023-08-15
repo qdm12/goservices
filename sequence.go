@@ -29,9 +29,9 @@ type Sequence struct {
 // NewSequence creates a new sequence of services given the settings,
 // and returns an error if any setting is not valid.
 func NewSequence(settings SequenceSettings) (sequence *Sequence, err error) {
-	settings.SetDefaults()
+	settings.setDefaults()
 
-	err = settings.Validate()
+	err = settings.validate()
 	if err != nil {
 		return nil, fmt.Errorf("validating settings: %w", err)
 	}

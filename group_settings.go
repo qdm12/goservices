@@ -20,15 +20,15 @@ type GroupSettings struct {
 	Hooks Hooks
 }
 
-// SetDefaults sets the defaults for the group settings.
-func (s *GroupSettings) SetDefaults() {
+// setDefaults sets the defaults for the group settings.
+func (s *GroupSettings) setDefaults() {
 	if s.Hooks == nil {
 		s.Hooks = hooks.NewNoop()
 	}
 }
 
-// Validate validates the group settings.
-func (s GroupSettings) Validate() (err error) {
+// validate validates the group settings.
+func (s GroupSettings) validate() (err error) {
 	if len(s.Services) == 0 {
 		return fmt.Errorf("%w", ErrNoService)
 	}

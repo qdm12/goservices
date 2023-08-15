@@ -25,9 +25,9 @@ type Restarter struct {
 // NewRestarter creates a new restarter given the settings.
 // It returns an error if any of the settings is not valid.
 func NewRestarter(settings RestarterSettings) (restarter *Restarter, err error) {
-	settings.SetDefaults()
+	settings.setDefaults()
 
-	err = settings.Validate()
+	err = settings.validate()
 	if err != nil {
 		return nil, fmt.Errorf("validating settings: %w", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_RestarterSettings_SetDefaults(t *testing.T) {
+func Test_RestarterSettings_setDefaults(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -34,13 +34,13 @@ func Test_RestarterSettings_SetDefaults(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			testCase.originalSettings.SetDefaults()
+			testCase.originalSettings.setDefaults()
 			assert.Equal(t, testCase.defaultedSettings, testCase.originalSettings)
 		})
 	}
 }
 
-func Test_RestarterSettings_Validate(t *testing.T) {
+func Test_RestarterSettings_validate(t *testing.T) {
 	t.Parallel()
 
 	dummyService := NewMockService(nil)
@@ -66,7 +66,7 @@ func Test_RestarterSettings_Validate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := testCase.settings.Validate()
+			err := testCase.settings.validate()
 
 			assert.ErrorIs(t, err, testCase.errSentinel)
 			if testCase.errSentinel != nil {

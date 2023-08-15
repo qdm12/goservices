@@ -26,9 +26,9 @@ type Group struct {
 // NewGroup creates a new group of services given the settings,
 // and returns an error if any setting is not valid.
 func NewGroup(settings GroupSettings) (group *Group, err error) {
-	settings.SetDefaults()
+	settings.setDefaults()
 
-	err = settings.Validate()
+	err = settings.validate()
 	if err != nil {
 		return nil, fmt.Errorf("validating settings: %w", err)
 	}

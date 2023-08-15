@@ -22,15 +22,15 @@ type SequenceSettings struct {
 	Hooks Hooks
 }
 
-// SetDefaults sets the defaults for the sequence settings.
-func (s *SequenceSettings) SetDefaults() {
+// setDefaults sets the defaults for the sequence settings.
+func (s *SequenceSettings) setDefaults() {
 	if s.Hooks == nil {
 		s.Hooks = hooks.NewNoop()
 	}
 }
 
-// Validate validates the sequence settings.
-func (s SequenceSettings) Validate() (err error) {
+// validate validates the sequence settings.
+func (s SequenceSettings) validate() (err error) {
 	switch {
 	case len(s.ServicesStart) == 0:
 		return fmt.Errorf("%w", ErrNoServiceStart)

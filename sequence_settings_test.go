@@ -35,7 +35,7 @@ func Test_SequenceSettings_SetDefaults(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			testCase.originalSettings.SetDefaults()
+			testCase.originalSettings.setDefaults()
 			assert.Equal(t, testCase.defaultedSettings, testCase.originalSettings)
 		})
 	}
@@ -144,7 +144,7 @@ func Test_SequenceSettings_Validate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := testCase.settings.Validate()
+			err := testCase.settings.validate()
 
 			assert.ErrorIs(t, err, testCase.errSentinel)
 			if testCase.errSentinel != nil {
