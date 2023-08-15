@@ -1,0 +1,38 @@
+name: CI
+on:
+  pull_request:
+  push:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    env:
+      DOCKER_BUILDKIT: "1"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: reviewdog/action-misspell@v1
+        with:
+          locale: "US"
+          level: error
+          exclude: |
+            *.md
+
+      - name: Linting
+        run: docker build --target lint .
+
+      - name: Mocks check
+        run: docker build --target mocks .
+
+      - name: Build test image
+        run: docker build --target test -t test-container .
+
+      - name: Run tests in test container
+        run: |
+          touch coverage.txt
+          docker run --rm \
+          -v "$(pwd)/coverage.txt:/tmp/gobuild/coverage.txt" \
+          test-container
