@@ -2,6 +2,8 @@
 
 `goservices` is a Go package to help manage services.
 
+For now, it is notably used in [Gluetun](https://github.com/qdm12/gluetun) and [qdm12/dns](https://github.com/qdm12/dns/tree/v2.0.0-beta) to run multiple servers and 'loops' in the same program.
+
 🚧 Logo to be added 🚧
 
 What is a service? It's this interface currently:
