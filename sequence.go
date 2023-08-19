@@ -197,8 +197,10 @@ func (s *Sequence) Stop() (err error) {
 		<-s.interceptDone
 		return nil
 	case StateStopped:
+		s.stateMutex.Unlock()
 		return fmt.Errorf("%s: %w", s, ErrAlreadyStopped)
 	case StateStarting, StateStopping:
+		s.stateMutex.Unlock()
 		panic("bad sequence implementation code: this code path should be unreachable")
 	}
 	s.state = StateStopping

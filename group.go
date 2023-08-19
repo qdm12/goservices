@@ -226,8 +226,10 @@ func (g *Group) Stop() (err error) {
 		<-g.interceptDone
 		return nil
 	case StateStopped:
+		g.stateMutex.Unlock()
 		return fmt.Errorf("%s: %w", g, ErrAlreadyStopped)
 	case StateStarting, StateStopping:
+		g.stateMutex.Unlock()
 		panic("bad group implementation code: this code path should be unreachable")
 	}
 	g.state = StateStopping

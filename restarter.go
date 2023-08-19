@@ -178,8 +178,10 @@ func (r *Restarter) Stop() (err error) {
 		<-r.interceptDone
 		return nil
 	case StateStopped:
+		r.stateMutex.Unlock()
 		return fmt.Errorf("%s: %w", r, ErrAlreadyStopped)
 	case StateStarting, StateStopping:
+		r.stateMutex.Unlock()
 		panic("bad restarter implementation code: this code path should be unreachable")
 	}
 	r.state = StateStopping
