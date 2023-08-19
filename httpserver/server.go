@@ -3,11 +3,11 @@ package httpserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/qdm12/goservices"
 )
@@ -18,7 +18,10 @@ type Server struct {
 	settings Settings
 
 	// Internal fields
-	service               goservices.Service
+	server                http.Server
+	startStopMutex        sync.Mutex
+	state                 goservices.State
+	stateMutex            sync.RWMutex
 	listeningAddress      string
 	listeningAddressMutex sync.RWMutex
 }
@@ -32,11 +35,10 @@ func New(settings Settings) (server *Server, err error) {
 		return nil, fmt.Errorf("validating settings: %w", err)
 	}
 
-	server = &Server{
+	return &Server{
 		settings: settings,
-	}
-	server.service = goservices.NewRunWrapper(*settings.Name, server.run)
-	return server, nil
+		state:    goservices.StateStopped,
+	}, nil
 }
 
 func (s *Server) String() string {
@@ -54,79 +56,96 @@ func (s *Server) GetAddress() (address string) {
 }
 
 // Start starts the HTTP server service.
-func (s *Server) Start(ctx context.Context) (runError <-chan error, err error) {
-	return s.service.Start(ctx)
-}
+// The context argument is ignored since starting the
+// HTTP server is rather instantaneous.
+// The listening address is accessible only AFTER the
+// call to Start completes, to ensure the server is started
+// successfully.
+func (s *Server) Start(_ context.Context) (runError <-chan error, err error) {
+	s.startStopMutex.Lock()
+	defer s.startStopMutex.Unlock()
 
-// Stop stops the HTTP server service.
-func (s *Server) Stop() (err error) {
-	return s.service.Stop()
-}
+	// Lock the state in case the server service is already running.
+	s.stateMutex.RLock()
+	state := s.state
+	// no need to keep a lock on the state since the `startStopMutex`
+	// prevents concurrent calls to `Start` and `Stop`.
+	s.stateMutex.RUnlock()
+	if state == goservices.StateRunning {
+		return nil, fmt.Errorf("%s: %w", s, goservices.ErrAlreadyStarted)
+	}
 
-func (s *Server) run(ctx context.Context, ready chan<- struct{},
-	runError, stopError chan<- error) {
+	s.state = goservices.StateStarting
+
 	listener, err := net.Listen("tcp", *s.settings.Address)
 	if err != nil {
-		runError <- err
-		close(runError)
-		return
+		return nil, err
 	}
 
 	s.listeningAddressMutex.Lock()
+	defer s.listeningAddressMutex.Unlock()
 	s.listeningAddress = listener.Addr().String()
-	server := http.Server{
+	s.server = http.Server{
 		Addr:              s.listeningAddress,
 		Handler:           s.settings.Handler,
 		ReadHeaderTimeout: s.settings.ReadHeaderTimeout,
 		ReadTimeout:       s.settings.ReadTimeout,
 	}
 	s.settings.Logger.Info(fmt.Sprintf("%s listening on %s", s, s.listeningAddress))
-	s.listeningAddressMutex.Unlock()
 
-	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
-	defer shutdownCancel()
-	shutdownReady := make(chan struct{})
-	shutdownDone := make(chan struct{})
-	go runShutdown(shutdownCtx, shutdownReady, shutdownDone, ctx.Done(), //nolint:contextcheck
-		stopError, &server, s.settings.ShutdownTimeout)
-	<-shutdownReady
+	runErrorBiDirectional := make(chan error)
+	runError = runErrorBiDirectional
+	ready := make(chan struct{})
 
-	close(ready)
+	// Hold the state mutex locked in case the server Serve
+	// function returns an error instantly.
+	s.stateMutex.Lock()
 
-	err = server.Serve(listener)
-	if ctx.Err() != nil {
-		// Server was stopped, wait for shutdown goroutine
-		// to exit.
-		<-shutdownDone
-		return
-	}
+	go func() {
+		close(ready)
+		err = s.server.Serve(listener)
+		if errors.Is(err, http.ErrServerClosed) {
+			return
+		}
+		s.stateMutex.Lock()
+		s.state = goservices.StateCrashed
+		s.stateMutex.Unlock()
+		runErrorBiDirectional <- err
+	}()
 
-	shutdownCancel()
-	<-shutdownDone
+	<-ready
+	s.state = goservices.StateRunning
+	s.stateMutex.Unlock()
 
-	runError <- err
-	close(runError)
+	return runError, nil
 }
 
-func runShutdown(ctx context.Context,
-	ready, done chan<- struct{},
-	shutdown <-chan struct{}, stopError chan<- error,
-	server *http.Server, timeout time.Duration) {
-	defer close(done)
-	close(ready)
-	select {
-	case <-ctx.Done():
-		return
-	case <-shutdown:
-	}
+// Stop stops the HTTP server service.
+func (s *Server) Stop() (err error) {
+	s.startStopMutex.Lock()
+	defer s.startStopMutex.Unlock()
 
-	shutdownCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	err := server.Shutdown(shutdownCtx)
-	if ctx.Err() != nil {
-		return
-	} else if err != nil {
-		stopError <- err
+	s.stateMutex.Lock()
+	switch s.state {
+	case goservices.StateRunning: // continue stopping the server
+	case goservices.StateCrashed: // server is already stopped
+		s.stateMutex.Unlock()
+		return nil
+	case goservices.StateStopped:
+		s.stateMutex.Unlock()
+		return fmt.Errorf("%s: %w", s, goservices.ErrAlreadyStopped)
+	case goservices.StateStarting, goservices.StateStopping:
+		s.stateMutex.Unlock()
+		panic("bad implementation code: this code path should be unreachable")
 	}
-	close(stopError)
+	s.state = goservices.StateStopping
+	s.stateMutex.Unlock()
+
+	shutdownCtx, cancel := context.WithTimeout(
+		context.Background(), s.settings.ShutdownTimeout)
+	defer cancel()
+	err = s.server.Shutdown(shutdownCtx)
+
+	s.state = goservices.StateStopped
+	return err
 }

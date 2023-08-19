@@ -151,6 +151,7 @@ Note it itself implements the `Service` interface, so you can nest it with other
 ## Create a service
 
 You can implement yourself the interface.
+A good thread safe example to follow would be the [httpserver](httpserver) service implementation.
 
 **HOWEVER** this is tedious to get right especially with the many race conditions possible (i.e. what if the service crashes at the same time as it is stopped?).
 
@@ -163,7 +164,7 @@ type RunFunction func(ctx context.Context,
 
 Please see the [documentation of the `RunFunction`](https://github.com/qdm12/goservices/blob/main/runwrapper.go#L9-L53) to know the details on how to implement it correctly.
 
-A concrete example is the [`httpserver`](httpserver) service which is implemented using this `RunWrapper`.
+A concrete example is the previous implementation of the [`httpserver`](https://github.com/qdm12/goservices/blob/68f98ba0a1f7dc5a258fda3b2a88d16e79b9bd26/httpserver/server.go) service which was using this `RunWrapper`.
 
 ## Pre-built services
 

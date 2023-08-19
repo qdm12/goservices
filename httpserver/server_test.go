@@ -30,6 +30,7 @@ func Test_New(t *testing.T) {
 				Handler: http.NewServeMux(),
 			},
 			expectedServer: &Server{
+				state: goservices.StateStopped,
 				settings: Settings{
 					Name:              stringPtr(""),
 					Handler:           http.NewServeMux(),
@@ -52,8 +53,6 @@ func Test_New(t *testing.T) {
 
 			if testCase.errMessage == "" {
 				assert.NoError(t, err)
-				assert.NotNil(t, server.service)
-				server.service = nil
 			} else {
 				assert.EqualError(t, err, testCase.errMessage)
 			}
@@ -148,9 +147,7 @@ func Test_Server_startError(t *testing.T) {
 		},
 	}
 
-	serverService := goservices.NewRunWrapper("server", server.run)
-
-	runtimeError, err := serverService.Start(context.Background())
+	runtimeError, err := server.Start(context.Background())
 
 	require.EqualError(t, err, "listen tcp: address -1: invalid port")
 	assert.Nil(t, runtimeError)
