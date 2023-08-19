@@ -152,6 +152,7 @@ Note it itself implements the `Service` interface, so you can nest it with other
 
 You can implement yourself the interface.
 A good thread safe example to follow would be the [httpserver](httpserver) service implementation.
+You can also refer to the [service implementation section in the design document](design.md#service-implementation).
 
 **HOWEVER** this is tedious to get right especially with the many race conditions possible (i.e. what if the service crashes at the same time as it is stopped?).
 
