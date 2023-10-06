@@ -57,6 +57,7 @@ func (e *errorsFanIn) fanIn(service string, input <-chan error,
 		case <-input:
 		default:
 		}
+		return
 	case err, ok := <-input:
 		if !ok {
 			// The service channel cannot be closed before we read
