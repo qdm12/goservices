@@ -283,7 +283,7 @@ func (g *Group) stop() (err error) {
 		}(service, serviceString, stopErrors)
 	}
 
-	for i := uint(0); i < runningCount; i++ {
+	for range runningCount {
 		stopErr := <-stopErrors
 		err = addStopError(err, stopErr.serviceName, stopErr.err)
 		delete(g.runningServices, stopErr.serviceName)

@@ -41,7 +41,6 @@ func Test_NewRestarter(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		testCase := testCase
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -152,7 +151,7 @@ func Test_Restarter_Start(t *testing.T) {
 		const numberOfRestarts = 5
 		wg := new(sync.WaitGroup)
 		wg.Add(numberOfRestarts)
-		for i := 0; i < numberOfRestarts; i++ {
+		for range numberOfRestarts {
 			// Restart expectations
 			errTest := errors.New("test error")
 			hooks.EXPECT().OnCrash("A", errTest)

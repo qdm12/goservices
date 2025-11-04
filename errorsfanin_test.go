@@ -230,7 +230,7 @@ func Test_errorsFanIn_stop(t *testing.T) {
 	e, reader := newErrorsFanIn()
 
 	const numberOfServices = 2
-	for i := 0; i < numberOfServices; i++ {
+	for i := range numberOfServices {
 		e.add(fmt.Sprint(i), make(chan error))
 	}
 

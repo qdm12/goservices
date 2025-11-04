@@ -112,7 +112,7 @@ func isOutputClosed(output <-chan serviceError) (closed bool) {
 // so they don't get stuck trying to write to their run error channel
 // with no channel reader anymore.
 func (e *errorsFanIn) stop() {
-	for i := 0; i < len(e.runErrors); i++ {
+	for i := range e.runErrors {
 		close(e.serviceToFaninStop[i])
 		<-e.serviceToFaninDone[i]
 	}
