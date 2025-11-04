@@ -3,8 +3,8 @@ ARG GO_VERSION=1.25
 ARG GOLANGCI_LINT_VERSION=v2.4.0
 ARG MOCKGEN_VERSION=v1.6.0
 
-FROM qmcgaw/binpot:golangci-lint-${GOLANGCI_LINT_VERSION} AS golangci-lint
-FROM qmcgaw/binpot:mockgen-${MOCKGEN_VERSION} AS mockgen
+FROM ghcr.io/qdm12/binpot:golangci-lint-${GOLANGCI_LINT_VERSION} AS golangci-lint
+FROM ghcr.io/qdm12/binpot:mockgen-${MOCKGEN_VERSION} AS mockgen
 
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS base
 # Note: findutils needed to have xargs support `-d` flag for mocks stage.
