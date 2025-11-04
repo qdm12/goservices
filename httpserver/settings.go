@@ -30,9 +30,10 @@ type Settings struct {
 	// is starting and on what address it is listening.
 	// It defaults to a no-op logger.
 	Logger Infoer
-	// OnStop is a callback that is called when the server
-	// is shutting down. By default it is a no-op.
-	OnStop func(ctx context.Context) error
+	// CancelHandler is a cancel function to be called
+	// when the server is shutting down. By default it is a no-op.
+	// It is notably useful to cancel operations in the handler.
+	CancelHandler context.CancelFunc
 }
 
 // SetDefaults sets the default values for the settings.
@@ -64,8 +65,8 @@ func (s *Settings) SetDefaults() {
 		s.Logger = new(noopLogger)
 	}
 
-	if s.OnStop == nil {
-		s.OnStop = func(_ context.Context) error { return nil }
+	if s.CancelHandler == nil {
+		s.CancelHandler = func() {}
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"reflect"
 	"regexp"
 	"testing"
 	"time"
@@ -17,6 +18,8 @@ import (
 func Test_New(t *testing.T) {
 	t.Parallel()
 
+	cancelHandler := func() {}
+
 	testCases := map[string]struct {
 		settings       Settings
 		expectedServer *Server
@@ -27,7 +30,8 @@ func Test_New(t *testing.T) {
 		},
 		"valid settings": {
 			settings: Settings{
-				Handler: http.NewServeMux(),
+				Handler:       http.NewServeMux(),
+				CancelHandler: cancelHandler,
 			},
 			expectedServer: &Server{
 				state: goservices.StateStopped,
@@ -39,6 +43,7 @@ func Test_New(t *testing.T) {
 					ReadTimeout:       10 * time.Second,
 					ReadHeaderTimeout: time.Second,
 					Logger:            &noopLogger{},
+					CancelHandler:     cancelHandler,
 				},
 			},
 		},
@@ -52,10 +57,12 @@ func Test_New(t *testing.T) {
 
 			if testCase.errMessage == "" {
 				assert.NoError(t, err)
-				require.NotNil(t, server)
-				onStopErr := server.settings.OnStop(context.Background())
-				assert.NoError(t, onStopErr)
-				server.settings.OnStop = nil // remove function pointer for comparison
+				assert.Equal(t,
+					reflect.ValueOf(testCase.expectedServer.settings.CancelHandler).Pointer(),
+					reflect.ValueOf(server.settings.CancelHandler).Pointer())
+				// Remove function pointer before comparison
+				testCase.expectedServer.settings.CancelHandler = nil
+				server.settings.CancelHandler = nil
 			} else {
 				assert.EqualError(t, err, testCase.errMessage)
 			}

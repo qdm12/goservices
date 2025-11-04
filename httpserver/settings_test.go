@@ -1,19 +1,19 @@
 package httpserver
 
 import (
-	"context"
-	"fmt"
 	"net/http"
+	reflect "reflect"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Settings_SetDefaults(t *testing.T) {
 	t.Parallel()
 
-	errTest := fmt.Errorf("test error")
+	cancelHandler := func() {}
 
 	testCases := map[string]struct {
 		settings         Settings
@@ -27,7 +27,7 @@ func Test_Settings_SetDefaults(t *testing.T) {
 				ReadTimeout:       10 * time.Second,
 				ReadHeaderTimeout: time.Second,
 				Logger:            &noopLogger{},
-				OnStop:            func(_ context.Context) error { return nil },
+				CancelHandler:     func() {},
 			},
 		},
 		"all settings fields set": {
@@ -39,7 +39,7 @@ func Test_Settings_SetDefaults(t *testing.T) {
 				ReadHeaderTimeout: 2 * time.Second,
 				ShutdownTimeout:   3 * time.Second,
 				Logger:            NewMockInfoer(nil),
-				OnStop:            func(_ context.Context) error { return errTest },
+				CancelHandler:     cancelHandler,
 			},
 			expectedSettings: Settings{
 				Name:              stringPtr("x"),
@@ -49,7 +49,7 @@ func Test_Settings_SetDefaults(t *testing.T) {
 				ReadHeaderTimeout: 2 * time.Second,
 				ShutdownTimeout:   3 * time.Second,
 				Logger:            NewMockInfoer(nil),
-				OnStop:            func(_ context.Context) error { return errTest },
+				CancelHandler:     cancelHandler,
 			},
 		},
 	}
@@ -58,14 +58,20 @@ func Test_Settings_SetDefaults(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			originalCancelHandler := testCase.settings.CancelHandler
+
 			testCase.settings.SetDefaults()
 
-			expectedFuncResult := testCase.expectedSettings.OnStop(context.Background())
-			actualFuncResult := testCase.settings.OnStop(context.Background())
-			assert.Equal(t, expectedFuncResult, actualFuncResult)
-			// Set the function to nil to be able to compare the structs
-			testCase.settings.OnStop = nil
-			testCase.expectedSettings.OnStop = nil
+			require.NotNil(t, testCase.settings.CancelHandler)
+			if originalCancelHandler != nil {
+				assert.Equal(t,
+					reflect.ValueOf(originalCancelHandler).Pointer(),
+					reflect.ValueOf(testCase.expectedSettings.CancelHandler).Pointer())
+			}
+			// Remove function pointer before comparison
+			testCase.expectedSettings.CancelHandler = nil
+			testCase.settings.CancelHandler = nil
+
 			assert.Equal(t, testCase.expectedSettings, testCase.settings)
 		})
 	}

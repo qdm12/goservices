@@ -161,20 +161,11 @@ func (s *Server) Stop() (err error) {
 	s.state = goservices.StateStopping
 	s.stateMutex.Unlock()
 
+	s.settings.CancelHandler()
 	shutdownCtx, cancel := context.WithTimeout(
 		context.Background(), s.settings.ShutdownTimeout)
 	defer cancel()
-	callBackErr := s.settings.OnStop(shutdownCtx)
 	err = s.server.Shutdown(shutdownCtx)
-	if callBackErr != nil {
-		if err != nil {
-			err = fmt.Errorf("shutting down server: %w; running OnStop callback: %w",
-				err, callBackErr)
-		} else {
-			err = fmt.Errorf("running OnStop callback: %w", err)
-		}
-	}
-
 	s.state = goservices.StateStopped
 	return err
 }
