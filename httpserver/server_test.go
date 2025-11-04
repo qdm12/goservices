@@ -53,6 +53,10 @@ func Test_New(t *testing.T) {
 
 			if testCase.errMessage == "" {
 				assert.NoError(t, err)
+				require.NotNil(t, server)
+				onStopErr := server.settings.OnStop(context.Background())
+				assert.NoError(t, onStopErr)
+				server.settings.OnStop = nil // remove function pointer for comparison
 			} else {
 				assert.EqualError(t, err, testCase.errMessage)
 			}

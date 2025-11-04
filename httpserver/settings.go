@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -29,6 +30,9 @@ type Settings struct {
 	// is starting and on what address it is listening.
 	// It defaults to a no-op logger.
 	Logger Infoer
+	// OnStop is a callback that is called when the server
+	// is shutting down. By default it is a no-op.
+	OnStop func(ctx context.Context) error
 }
 
 // SetDefaults sets the default values for the settings.
@@ -58,6 +62,10 @@ func (s *Settings) SetDefaults() {
 
 	if s.Logger == nil {
 		s.Logger = new(noopLogger)
+	}
+
+	if s.OnStop == nil {
+		s.OnStop = func(ctx context.Context) error { return nil }
 	}
 }
 

@@ -1,6 +1,8 @@
 package httpserver
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -10,6 +12,8 @@ import (
 
 func Test_Settings_SetDefaults(t *testing.T) {
 	t.Parallel()
+
+	errTest := fmt.Errorf("test error")
 
 	testCases := map[string]struct {
 		settings         Settings
@@ -23,6 +27,7 @@ func Test_Settings_SetDefaults(t *testing.T) {
 				ReadTimeout:       10 * time.Second,
 				ReadHeaderTimeout: time.Second,
 				Logger:            &noopLogger{},
+				OnStop:            func(ctx context.Context) error { return nil },
 			},
 		},
 		"all settings fields set": {
@@ -34,6 +39,7 @@ func Test_Settings_SetDefaults(t *testing.T) {
 				ReadHeaderTimeout: 2 * time.Second,
 				ShutdownTimeout:   3 * time.Second,
 				Logger:            NewMockInfoer(nil),
+				OnStop:            func(ctx context.Context) error { return errTest },
 			},
 			expectedSettings: Settings{
 				Name:              stringPtr("x"),
@@ -43,6 +49,7 @@ func Test_Settings_SetDefaults(t *testing.T) {
 				ReadHeaderTimeout: 2 * time.Second,
 				ShutdownTimeout:   3 * time.Second,
 				Logger:            NewMockInfoer(nil),
+				OnStop:            func(ctx context.Context) error { return errTest },
 			},
 		},
 	}
@@ -54,6 +61,12 @@ func Test_Settings_SetDefaults(t *testing.T) {
 
 			testCase.settings.SetDefaults()
 
+			expectedFuncResult := testCase.expectedSettings.OnStop(context.Background())
+			actualFuncResult := testCase.settings.OnStop(context.Background())
+			assert.Equal(t, expectedFuncResult, actualFuncResult)
+			// Set the function to nil to be able to compare the structs
+			testCase.settings.OnStop = nil
+			testCase.expectedSettings.OnStop = nil
 			assert.Equal(t, testCase.expectedSettings, testCase.settings)
 		})
 	}
