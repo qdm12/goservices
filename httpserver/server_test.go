@@ -96,7 +96,7 @@ func Test_Server_success(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 

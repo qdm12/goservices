@@ -65,7 +65,7 @@ func (s *Settings) SetDefaults() {
 	}
 
 	if s.OnStop == nil {
-		s.OnStop = func(ctx context.Context) error { return nil }
+		s.OnStop = func(_ context.Context) error { return nil }
 	}
 }
 

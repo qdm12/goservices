@@ -1,6 +1,6 @@
 package goservices
 
-// HooksStart is the interface required to hook
+// Hooks is the interface required to hook
 // into service events.
 type Hooks interface {
 	HooksStart

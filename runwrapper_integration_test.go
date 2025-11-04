@@ -16,7 +16,7 @@ func Test_RunWrapper(t *testing.T) {
 		t.Parallel()
 		errTest := errors.New("test error")
 
-		run := func(ctx context.Context, ready chan<- struct{}, runError, stopError chan<- error) {
+		run := func(_ context.Context, _ chan<- struct{}, runError, _ chan<- error) {
 			runError <- errTest
 		}
 
@@ -35,7 +35,7 @@ func Test_RunWrapper(t *testing.T) {
 	t.Run("run_then_stopped", func(t *testing.T) {
 		t.Parallel()
 
-		run := func(ctx context.Context, ready chan<- struct{}, runError, stopError chan<- error) {
+		run := func(ctx context.Context, ready chan<- struct{}, _, stopError chan<- error) {
 			close(ready)
 			<-ctx.Done()
 			close(stopError) // no error
@@ -63,7 +63,7 @@ func Test_RunWrapper(t *testing.T) {
 		t.Parallel()
 		errTest := errors.New("test error")
 
-		run := func(ctx context.Context, ready chan<- struct{}, runError, stopError chan<- error) {
+		run := func(ctx context.Context, ready chan<- struct{}, _, stopError chan<- error) {
 			close(ready)
 			<-ctx.Done()
 			stopError <- errTest
@@ -93,7 +93,7 @@ func Test_RunWrapper(t *testing.T) {
 		t.Parallel()
 		errTest := errors.New("test error")
 
-		run := func(ctx context.Context, ready chan<- struct{}, runError, stopError chan<- error) {
+		run := func(_ context.Context, ready chan<- struct{}, runError, _ chan<- error) {
 			close(ready)
 			runError <- errTest
 			close(runError)
@@ -153,7 +153,7 @@ func Test_RunWrapper(t *testing.T) {
 		errTest := errors.New("test error")
 		crashTrigger := make(chan struct{})
 
-		run := func(ctx context.Context, ready chan<- struct{}, runError, stopError chan<- error) {
+		run := func(_ context.Context, ready chan<- struct{}, runError, _ chan<- error) {
 			close(ready)
 			<-crashTrigger
 			runError <- errTest

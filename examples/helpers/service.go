@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// DummyServiceSettings contains settings for the DummyService.
 type DummyServiceSettings struct {
 	// Name is the name of the service returned by the String function.
 	Name string
@@ -18,12 +19,14 @@ type DummyServiceSettings struct {
 	MaxLife time.Duration
 }
 
+// NewDummyService creates a new DummyService with the given settings.
 func NewDummyService(settings DummyServiceSettings) *DummyService {
 	return &DummyService{
 		settings: settings,
 	}
 }
 
+// DummyService is a dummy implementation of the Service interface.
 type DummyService struct {
 	settings DummyServiceSettings
 }
@@ -34,6 +37,7 @@ func (s *DummyService) String() string {
 
 var ErrCrashed = errors.New("crashed")
 
+// Start starts the dummy service.
 func (s *DummyService) Start(ctx context.Context) (runError <-chan error, startErr error) {
 	if s.settings.MaxLife > 0 {
 		readWriteRunError := make(chan error)
@@ -57,6 +61,7 @@ func (s *DummyService) Start(ctx context.Context) (runError <-chan error, startE
 	}
 }
 
+// Stop is a no-op for the dummy service.
 func (s *DummyService) Stop() error {
 	return nil
 }

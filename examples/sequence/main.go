@@ -1,3 +1,4 @@
+// Example of a sequence of services with goservices.
 package main
 
 import (

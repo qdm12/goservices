@@ -56,12 +56,10 @@ func (s *Server) GetAddress() (address string) {
 }
 
 // Start starts the HTTP server service.
-// The context argument is ignored since starting the
-// HTTP server is rather instantaneous.
 // The listening address is accessible only AFTER the
 // call to Start completes, to ensure the server is started
 // successfully.
-func (s *Server) Start(_ context.Context) (runError <-chan error, err error) {
+func (s *Server) Start(ctx context.Context) (runError <-chan error, err error) {
 	s.startStopMutex.Lock()
 	defer s.startStopMutex.Unlock()
 
@@ -77,7 +75,27 @@ func (s *Server) Start(_ context.Context) (runError <-chan error, err error) {
 
 	s.state = goservices.StateStarting
 
-	listener, err := net.Listen("tcp", *s.settings.Address)
+	// The listener below will either be stopped by:
+	// - this Start function context being done before the server
+	//   starts listening
+	// - the Stop function being called after the server has started
+	//   listening. The [http.Server.Shutdown] function will close the listener.
+	listenCtx, listenCancel := context.WithCancel(context.Background())
+	forgetStartCtx := make(chan struct{})
+	startCtxWaitDone := make(chan struct{})
+	go func() {
+		defer close(startCtxWaitDone)
+		select {
+		case <-ctx.Done():
+			listenCancel()
+		case <-forgetStartCtx:
+			// Start completed successfully, no need to cancel the
+			// listener using the start context.
+		}
+	}()
+
+	listenConfig := net.ListenConfig{}
+	listener, err := listenConfig.Listen(listenCtx, "tcp", *s.settings.Address) //nolint:contextcheck
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +132,8 @@ func (s *Server) Start(_ context.Context) (runError <-chan error, err error) {
 	}()
 
 	<-ready
+	close(forgetStartCtx)
+	<-startCtxWaitDone
 	s.state = goservices.StateRunning
 	s.stateMutex.Unlock()
 

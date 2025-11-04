@@ -1,3 +1,4 @@
+// Package hooks provides service handler hooks implementations.
 package hooks
 
 // LogHooks implements service handler hooks

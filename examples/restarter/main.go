@@ -1,3 +1,5 @@
+// Example of a restarter service that restarts a dummy service
+// that lives for one second repeatedly until interrupted.
 package main
 
 import (

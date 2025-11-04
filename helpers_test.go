@@ -104,7 +104,7 @@ func Test_andServiceStrings(t *testing.T) {
 		result          string
 	}{
 		"empty": {
-			servicesBuilder: func(ctrl *gomock.Controller) []Service {
+			servicesBuilder: func(_ *gomock.Controller) []Service {
 				return nil
 			},
 		},

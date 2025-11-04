@@ -61,8 +61,8 @@ func Test_RunWrapper_Start(t *testing.T) {
 		t.Parallel()
 		errTest := errors.New("test error")
 
-		run := func(ctx context.Context, ready chan<- struct{},
-			runError, stopError chan<- error) {
+		run := func(_ context.Context, _ chan<- struct{},
+			runError, _ chan<- error) {
 			runError <- errTest
 		}
 
@@ -80,8 +80,8 @@ func Test_RunWrapper_Start(t *testing.T) {
 	t.Run("start_context_canceled", func(t *testing.T) {
 		t.Parallel()
 
-		run := func(ctx context.Context, ready chan<- struct{},
-			runError, stopError chan<- error) {
+		run := func(ctx context.Context, _ chan<- struct{},
+			runError, _ chan<- error) {
 			<-ctx.Done()
 			runError <- fmt.Errorf("service: %w", context.Canceled)
 		}
@@ -105,7 +105,7 @@ func Test_RunWrapper_Start(t *testing.T) {
 		t.Parallel()
 
 		run := func(ctx context.Context, ready chan<- struct{},
-			runError, stopError chan<- error) {
+			_, stopError chan<- error) {
 			close(ready)
 			<-ctx.Done()
 			close(stopError)
@@ -133,7 +133,7 @@ func Test_RunWrapper_Start(t *testing.T) {
 		t.Parallel()
 		errTest := errors.New("test error")
 
-		run := func(ctx context.Context, ready chan<- struct{},
+		run := func(_ context.Context, ready chan<- struct{},
 			runError, stopError chan<- error) {
 			defer close(stopError)
 			close(ready)
