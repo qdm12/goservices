@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/golang/mock v1.6.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
